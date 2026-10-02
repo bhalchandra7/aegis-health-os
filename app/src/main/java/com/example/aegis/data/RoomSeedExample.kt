@@ -1,27 +1,25 @@
-package com.example.aegis.viewmodel
+# Aegis Health OS
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.aegis.data.HealthRepository
-import com.example.aegis.model.HealthUiState
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+A Compose-based Android app prototype for personal health management, emergency access, medication tracking, appointments, and caregiver coordination.
 
-class HealthViewModel(
-    private val repository: HealthRepository
-) : ViewModel() {
+## Features
+- Emergency profile and quick access mode
+- Medical memory timeline
+- Medication center
+- Appointments and follow-up summaries
+- Security/caregiver access
+- AI assistant overlay
+- Room-based state persistence
 
-    private val _uiState = MutableStateFlow(HealthUiState())
-    val uiState: StateFlow<HealthUiState> = _uiState.asStateFlow()
+## Tech
+- Kotlin
+- Jetpack Compose
+- Room database
+- ViewModel + StateFlow
+- Navigation Compose
 
-    init {
-        viewModelScope.launch {
-            repository.seedDefaultData()
-            repository.observeHealthState().collect { state ->
-                _uiState.value = state
-            }
-        }
-    }
-}
+## Run
+Open in Android Studio and run the `app` module.
+
+## Notes
+This is a UI-focused prototype and healthcare app foundation, not a regulated medical device.

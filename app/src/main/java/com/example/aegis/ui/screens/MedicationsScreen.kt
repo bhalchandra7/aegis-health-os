@@ -8,88 +8,108 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Alarm
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.aegis.TitleRow
+import com.example.aegis.model.EmergencyContact
 import com.example.aegis.model.EmergencyProfile
-import com.example.aegis.model.MedicalMemoryEntry
 
 @Composable
-fun HealthScreen(
+fun ProfileSecurityScreen(
     profile: EmergencyProfile,
-    onNavigateToAssistantWithQuery: (String) -> Unit
+    onOpenOnboarding: () -> Unit = {},
+    onEditProfile: () -> Unit = {},
+    onAddContact: () -> Unit = {}
 ) {
-    val records = listOf(
-        MedicalMemoryEntry("Hypertension", "Diagnosis", "2023-09-14", "Long-term blood pressure management and checkups."),
-        MedicalMemoryEntry("Lisinopril 10 mg", "Medication", "2023-10-01", "Daily dose; continue through refills."),
-        MedicalMemoryEntry("Lipid Panel", "Test", "2024-02-18", "Cholesterol improved with statin therapy."),
-        MedicalMemoryEntry("Annual Physical", "Hospital / Visit", "2024-04-19", "Reviewed symptoms and medication adherence."),
-        MedicalMemoryEntry("Peanuts", "Allergy", "2018-10-02", "Avoid peanut-based foods and check labels."),
-    )
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        TitleRow("Medical Memory")
-        Spacer(modifier = Modifier.height(12.dp))
+        TitleRow("Security & Caregiver Access")
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A))
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Care Summary", color = Color.White)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("Conditions: ${profile.conditions.joinToString()}", color = Color(0xFFCCF7FF))
-                Text("Allergies: ${profile.allergies.joinToString()}", color = Color(0xFFCCF7FF))
-                Text("Physician: ${profile.physician}", color = Color(0xFFCCF7FF))
+                Text("Emergency Contacts", fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(12.dp))
+                profile.emergencyContacts.forEach { contact ->
+                    ContactRow(contact)
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onEditProfile, modifier = Modifier.fillMaxWidth()) {
+            Text("Edit Emergency Profile")
+        }
 
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        OutlinedButton(
+            onClick = onOpenOnboarding,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            items(records) { item ->
-                HealthMemoryCard(item)
+            Text("Complete Safety Setup")
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Advance Directives", fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(profile.directives)
             }
         }
     }
 }
 
 @Composable
-fun HealthMemoryCard(item: MedicalMemoryEntry) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(16.dp)
+fun ContactRow(contact: EmergencyContact) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(item.category, fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
-                Text(item.date, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(
+            imageVector = Icons.Default.AccountCircle,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(contact.name, fontWeight = FontWeight.SemiBold)
+            Text("${contact.relationship} • ${contact.phone}")
+            if (contact.email != null) {
+                Text(contact.email, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(item.title)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(item.detail, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        Icon(
+            imageVector = if (contact.canReceiveAlerts) Icons.Default.Alarm else Icons.Default.CheckCircle,
+            contentDescription = null,
+            tint = if (contact.canReceiveAlerts) Color(0xFF67E8F9) else Color(0xFF22C55E)
+        )
     }
 }

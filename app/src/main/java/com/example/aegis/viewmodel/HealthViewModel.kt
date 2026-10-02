@@ -1,7 +1,9 @@
 package com.example.aegis.data
 
 import com.example.aegis.model.Appointment
+import com.example.aegis.model.EmergencyContact
 import com.example.aegis.model.EmergencyProfile
+import com.example.aegis.model.HealthUiState
 import com.example.aegis.model.Medication
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -32,15 +34,15 @@ class HealthRepository(
                     id = 0,
                     name = defaultProfile.name,
                     bloodType = defaultProfile.bloodType,
-                    allergies = defaultProfile.allergies.joinToString(separator = ";"),
-                    currentMedications = defaultProfile.currentMedications.joinToString(separator = ";"),
-                    conditions = defaultProfile.conditions.joinToString(separator = ";"),
+                    allergies = defaultProfile.allergies.joinToString(";"),
+                    currentMedications = defaultProfile.currentMedications.joinToString(";"),
+                    conditions = defaultProfile.conditions.joinToString(";"),
                     physician = defaultProfile.physician,
                     directives = defaultProfile.directives,
-                    emergencyContacts = defaultProfile.emergencyContacts.joinToString(separator = "|") { contact ->
+                    emergencyContacts = defaultProfile.emergencyContacts.joinToString("|") { contact ->
                         "${contact.name},${contact.relationship},${contact.phone},${contact.email ?: ""},${contact.canReceiveAlerts},${contact.canViewEmergencyProfile}"
                     },
-                    implantedDevices = defaultProfile.implantedDevices.joinToString(separator = ";")
+                    implantedDevices = defaultProfile.implantedDevices.joinToString(";")
                 )
             )
         }
@@ -99,8 +101,8 @@ class HealthRepository(
                         date = appointment.date,
                         time = appointment.time,
                         location = appointment.location,
-                        symptoms = appointment.symptoms.joinToString(separator = ";"),
-                        questions = appointment.questions.joinToString(separator = ";"),
+                        symptoms = appointment.symptoms.joinToString(";"),
+                        questions = appointment.questions.joinToString(";"),
                         followUpNotes = appointment.followUpNotes,
                         completed = appointment.completed
                     )
@@ -109,12 +111,61 @@ class HealthRepository(
         }
     }
 
-    fun observeHealthState(): Flow<com.example.aegis.model.HealthUiState> = combine(
+    suspend fun updateProfile(profile: EmergencyProfile) {
+        healthDao.insertProfile(
+            ProfileEntity(
+                id = 0,
+                name = profile.name,
+                bloodType = profile.bloodType,
+                allergies = profile.allergies.joinToString(";"),
+                currentMedications = profile.currentMedications.joinToString(";"),
+                conditions = profile.conditions.joinToString(";"),
+                physician = profile.physician,
+                directives = profile.directives,
+                emergencyContacts = profile.emergencyContacts.joinToString("|") { contact ->
+                    "${contact.name},${contact.relationship},${contact.phone},${contact.email ?: ""},${contact.canReceiveAlerts},${contact.canViewEmergencyProfile}"
+                },
+                implantedDevices = profile.implantedDevices.joinToString(";")
+            )
+        )
+    }
+
+    suspend fun addMedication(medication: Medication) {
+        healthDao.insertMedication(
+            MedicationEntity(
+                name = medication.name,
+                dosage = medication.dosage,
+                schedule = medication.schedule,
+                refillDate = medication.refillDate,
+                prescriber = medication.prescriber,
+                pharmacy = medication.pharmacy,
+                status = medication.status
+            )
+        )
+    }
+
+    suspend fun addAppointment(appointment: Appointment) {
+        healthDao.insertAppointment(
+            AppointmentEntity(
+                doctorName = appointment.doctorName,
+                specialty = appointment.specialty,
+                date = appointment.date,
+                time = appointment.time,
+                location = appointment.location,
+                symptoms = appointment.symptoms.joinToString(";"),
+                questions = appointment.questions.joinToString(";"),
+                followUpNotes = appointment.followUpNotes,
+                completed = appointment.completed
+            )
+        )
+    }
+
+    fun observeHealthState(): Flow<HealthUiState> = combine(
         profileFlow,
         medicationsFlow,
         appointmentsFlow
     ) { profile, meds, appts ->
-        com.example.aegis.model.HealthUiState(
+        HealthUiState(
             profile = profile,
             medications = meds,
             appointments = appts
@@ -124,14 +175,14 @@ class HealthRepository(
 
 private fun ProfileEntity.toEmergencyProfile(): EmergencyProfile = EmergencyProfile(
     name = name,
-    allergies = allergies.split(";"),
-    currentMedications = currentMedications.split(";"),
-    conditions = conditions.split(";"),
-    implantedDevices = implantedDevices.split(";"),
+    allergies = allergies.split(";").filter { it.isNotBlank() },
+    currentMedications = currentMedications.split(";").filter { it.isNotBlank() },
+    conditions = conditions.split(";").filter { it.isNotBlank() },
+    implantedDevices = implantedDevices.split(";").filter { it.isNotBlank() },
     emergencyContacts = emergencyContacts.split("|").filter { it.isNotBlank() }.map { raw ->
         val parts = raw.split(",")
         if (parts.size >= 6) {
-            com.example.aegis.model.EmergencyContact(
+            EmergencyContact(
                 name = parts[0],
                 relationship = parts[1],
                 phone = parts[2],
@@ -140,7 +191,7 @@ private fun ProfileEntity.toEmergencyProfile(): EmergencyProfile = EmergencyProf
                 canViewEmergencyProfile = parts[5].toBooleanStrictOrNull() ?: true
             )
         } else {
-            com.example.aegis.model.EmergencyContact("Unknown", "Contact", "", null)
+            EmergencyContact("Unknown", "Contact", "", null)
         }
     },
     bloodType = bloodType,
@@ -164,8 +215,8 @@ private fun AppointmentEntity.toAppointment(): Appointment = Appointment(
     date = date,
     time = time,
     location = location,
-    symptoms = symptoms.split(";"),
-    questions = questions.split(";"),
+    symptoms = symptoms.split(";").filter { it.isNotBlank() },
+    questions = questions.split(";").filter { it.isNotBlank() },
     followUpNotes = followUpNotes,
     completed = completed
 )

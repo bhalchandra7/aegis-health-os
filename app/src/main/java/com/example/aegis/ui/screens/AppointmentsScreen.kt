@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
@@ -26,7 +27,11 @@ import com.example.aegis.TitleRow
 import com.example.aegis.model.Medication
 
 @Composable
-fun MedicationsScreen(medications: List<Medication>) {
+fun MedicationsScreen(
+    medications: List<Medication>,
+    onAddMedication: () -> Unit = {},
+    onEditMedication: (Medication) -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -35,18 +40,24 @@ fun MedicationsScreen(medications: List<Medication>) {
         TitleRow("Medication Center")
         Spacer(modifier = Modifier.height(12.dp))
 
+        Button(onClick = onAddMedication, modifier = Modifier.fillMaxWidth()) {
+            Text("Add Medication")
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(medications) { med ->
-                MedicationCard(med)
+                MedicationCard(med, onEditMedication)
             }
         }
     }
 }
 
 @Composable
-fun MedicationCard(med: Medication) {
+fun MedicationCard(med: Medication, onEditMedication: (Medication) -> Unit = {}) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -72,6 +83,11 @@ fun MedicationCard(med: Medication) {
             Text("Prescriber: ${med.prescriber}")
             Text("Pharmacy: ${med.pharmacy}")
             Text("Refill due: ${med.refillDate}")
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = { onEditMedication(med) }) {
+                Text("Save/Update")
+            }
         }
     }
 }

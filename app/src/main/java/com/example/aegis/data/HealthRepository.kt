@@ -1,44 +1,80 @@
-package com.example.aegis.data
+package com.example.aegis.ui.screens
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.example.aegis.model.Appointment
 
-@Entity(tableName = "profile")
-data class ProfileEntity(
-    @PrimaryKey val id: Int = 0,
-    val name: String,
-    val bloodType: String,
-    val allergies: String,
-    val currentMedications: String,
-    val conditions: String,
-    val physician: String,
-    val directives: String,
-    val emergencyContacts: String,
-    val implantedDevices: String
-)
+@Composable
+fun EditAppointmentScreen(
+    onSave: (Appointment) -> Unit,
+    onCancel: () -> Unit
+) {
+    var doctorName by remember { mutableStateOf("") }
+    var specialty by remember { mutableStateOf("") }
+    var date by remember { mutableStateOf("") }
+    var time by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }
+    var symptoms by remember { mutableStateOf("") }
+    var questions by remember { mutableStateOf("") }
+    var followUpNotes by remember { mutableStateOf("") }
+    var completed by remember { mutableStateOf(false) }
 
-@Entity(tableName = "medications")
-data class MedicationEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val name: String,
-    val dosage: String,
-    val schedule: String,
-    val refillDate: String,
-    val prescriber: String,
-    val pharmacy: String,
-    val status: String
-)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("Add Appointment")
 
-@Entity(tableName = "appointments")
-data class AppointmentEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val doctorName: String,
-    val specialty: String,
-    val date: String,
-    val time: String,
-    val location: String,
-    val symptoms: String,
-    val questions: String,
-    val followUpNotes: String,
-    val completed: Boolean
-)
+        OutlinedTextField(value = doctorName, onValueChange = { doctorName = it }, label = { Text("Doctor") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = specialty, onValueChange = { specialty = it }, label = { Text("Specialty") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text("Date") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = time, onValueChange = { time = it }, label = { Text("Time") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = location, onValueChange = { location = it }, label = { Text("Location") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = symptoms, onValueChange = { symptoms = it }, label = { Text("Symptoms") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = questions, onValueChange = { questions = it }, label = { Text("Questions") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = followUpNotes, onValueChange = { followUpNotes = it }, label = { Text("Follow-up Notes") }, modifier = Modifier.fillMaxWidth())
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Button(onClick = onCancel) { Text("Cancel") }
+            Button(onClick = {
+                if (doctorName.isNotBlank()) {
+                    onSave(
+                        Appointment(
+                            doctorName = doctorName,
+                            specialty = specialty,
+                            date = date,
+                            time = time,
+                            location = location,
+                            symptoms = symptoms.split(",").map { it.trim() }.filter { it.isNotEmpty() },
+                            questions = questions.split(",").map { it.trim() }.filter { it.isNotEmpty() },
+                            followUpNotes = followUpNotes,
+                            completed = completed
+                        )
+                    )
+                }
+            }) {
+                Text("Save")
+            }
+        }
+    }
+}
