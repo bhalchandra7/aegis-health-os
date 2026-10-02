@@ -11,10 +11,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class HealthRepository(
-    private val healthDao: HealthDao
+    private val healthDao: HealthDao,
+    private val secureHealthPreferences: SecureHealthPreferences
 ) {
     val profileFlow: Flow<EmergencyProfile> = healthDao.observeProfile().map { entity ->
-        entity?.toEmergencyProfile() ?: EmergencyProfile()
+        entity?.toEmergencyProfile() ?: secureHealthPreferences.loadProfile() ?: EmergencyProfile()
     }
 
     val medicationsFlow: Flow<List<Medication>> = healthDao.observeMedications().map { list ->
@@ -28,7 +29,8 @@ class HealthRepository(
     suspend fun seedDefaultData() {
         val existingProfile = healthDao.observeProfile().first()
         if (existingProfile == null) {
-            val defaultProfile = EmergencyProfile()
+            val secureProfile = secureHealthPreferences.loadProfile()
+            val defaultProfile = secureProfile ?: EmergencyProfile()
             healthDao.insertProfile(
                 ProfileEntity(
                     id = 0,
@@ -45,6 +47,7 @@ class HealthRepository(
                     implantedDevices = defaultProfile.implantedDevices.joinToString(";")
                 )
             )
+            secureHealthPreferences.saveProfile(defaultProfile)
         }
 
         val existingMedications = healthDao.observeMedications().first()
@@ -112,6 +115,7 @@ class HealthRepository(
     }
 
     suspend fun updateProfile(profile: EmergencyProfile) {
+        secureHealthPreferences.saveProfile(profile)
         healthDao.insertProfile(
             ProfileEntity(
                 id = 0,
